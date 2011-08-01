@@ -70,7 +70,6 @@ chroot_fetch() { in_chroot /usr/bin/yum -y --downloadonly install "$@"; }
 make_redhat_chroot() (
     postcmds=()
     mkdir -p "$CHROOT"
-    sudo mount -t tmpfs -osize=2G none "$CHROOT"
     cd "$BUILD_DIR/CentOS"
     # first, extract our core files into the chroot.
     for pkg in "${OS_BASIC_PACKAGES[@]}"; do
