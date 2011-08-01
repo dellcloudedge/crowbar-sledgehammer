@@ -1,37 +1,17 @@
 This file documents the process needed to create Sledgehammer on a non-Redhat
 system.
 
-1: Download a CentOS 5.6 install CD or DVD from your favourite mirror.
-2: Install a basic non-GUI, single-partition, no-LVM  install in KVM using a 
-   raw disk image.
-   a) Make a raw hard drive image to store the basic install:
-      qemu-img create -f raw centos.img 6G
-   b) Install CentOS on the raw image.  Ensure that you use a single-
-      partition install without LVM, and do not install any desktop software.
-      kvm -m 512M -net none -hda centos.img -boot d -cdrom iso/CentOS-5.6-x86_64-bin-DVD-1of2.iso -usbdevice tablet
-      When you get to disk partitioning, select remove all partitions, and
-      select Remove and modify partitioning layout.  
-      Delete all the logical volumes, then the volume group, then the 
-      partitions.  Once that is done, create a single partition that uses
-      all the space on the disk as the root filesystem, and force it to be a 
-      primary partition. Ignore the warning about no swap space.
-3: Once the install is finished, power off the VM, bind the disk image
-   to a loopback device, create a device for the partition using kpartx,
-   and mount the filesystem.
-   sudo losetup /dev/loop0 centos.img
-   sudo kpartx -a /dev/loop0
-   mkdir centos_img centos
-   sudo mount /dev/mapper/loop0p1 centos_img
-   sudo cp -a centos_img/. centos/.
-   sudo umount centos_img
-   sudo kpartx -d /dev/loop0
-   sudo losetup -d /dev/loop0
-4: Make sure build_sledgehammer.sh knows how to find the chroot:
-   export SLEDGEHAMMER_CHROOT=/path/to/centos
-5: Run build_sledgehammer.sh.
+1: Download a CentOS 5.6 install DVD from bittorent or your favourite mirror.
+2: Ensure that you have ruby, rpm, and rpm2cpio installed on your build system.
+3: If you are not building the Sledgehammer image as root, ensure that you
+   have sudo rights to the following commands:
+   mount umount cp rm cpio chroot
+4: Make sure build_sledgehammer.sh knows where to find the CentOS DVD:
+   export CENTOS_ISO=/path/to/CentOS-5.6-x86_64-bin-DVD-1of2.iso
+5: Run build_sledgehammer.sh from the checkout:
+   ./build_sledgehammer.sh
 
-All done, until sledgehammer needs to be rebuilt again.  We don't anticipate
-that happening too often -- Crowbar does all the heavy lifting, Sledgehammer
-just provides an environment for us to discover hardware, configure the 
-RAID and BMC, and change whatever hardware settings we need to configure but
-that we cannot to in Ubuntu for whatever reason.
+The build script will create a basic chroot install of CentOS, bootstrap
+yum in it, download and install everything else needed to create sledgehammer,
+and then create a tarball of the tftpboot image in 
+bin/sledgehammer-tftpboot.tar.gz
