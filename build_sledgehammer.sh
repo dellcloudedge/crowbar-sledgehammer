@@ -44,8 +44,6 @@ cleanup() {
     sudo rm -rf "$BUILD_DIR" "$CHROOT" 
 }
 
-trap cleanup 0 INT QUIT TERM
-
 OS_BASIC_PACKAGES=(MAKEDEV SysVinit audit-libs basesystem bash beecrypt \
     bzip2-libs coreutils centos-release cracklib cracklib-dicts db4 \
     device-mapper e2fsprogs elfutils-libelf e2fsprogs-libs ethtool expat \
@@ -154,6 +152,7 @@ EOF
 # Make a directory for chroots and to mount the ISO on.
 [[ $CHROOT ]] || CHROOT=$(mktemp -d "$HOME/.sledgehammer_chroot.XXXXX")
 [[ $BUILD_DIR ]] || BUILD_DIR=$(mktemp -d "$HOME/.centos-image.XXXXXX")
+trap cleanup 0 INT QUIT TERM
 sudo mount -o loop "$CENTOS_ISO" "$BUILD_DIR"
 # Fire up Webrick to serve out the contents of the iso.
 (   cd "$BUILD_DIR"
