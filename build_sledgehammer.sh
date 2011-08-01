@@ -24,7 +24,7 @@
 # up a chroot environment capable of building Sledgehammer.  Please follow
 # the instructions in HOWTO.Non.Redhat to do so, and point this script at it
 # using the SLEDGEHAMMER_CHROOT environment variable.
-# You will also need sudo rights to mount, umount, cp, and chroot.
+# You will also need sudo rights to mount, umount, cp, rm, cpio, and chroot.
 
 [[ $DEBUG ]] && {
     set -x
@@ -124,12 +124,22 @@ EOF
 [[ -f ${0##*/} ]] || \
     die "You must run ${0##*/} from the Sledgehammer checkout, not from $PWD"
 
+if ! which rpm rpm2cpio &>/dev/null; then
+    die "Cannot find rpm and rpm2cpio, we cannot proceed."
+fi
+
+if ! which ruby &>/dev/null; then
+    die "You must have Ruby installed to run this script.  We cannot proceed."
+fi
+
 [[ $CENTOS_ISO && -f $CENTOS_ISO ]] || \
     die "You must have the Centos 5.6 install DVD downloaded, and CENTOS_ISO must point to it."
 
+# Make a directory for chroots and to mount the ISO on.
 [[ $CHROOT ]] || CHROOT=$(mktemp -d "$HOME/.sledgehammer_chroot.XXXXX")
 [[ $BUILD_DIR ]] || BUILD_DIR=$(mktemp -d "$HOME/.centos-image.XXXXXX")
 sudo mount -o loop "$CENTOS_ISO" "$BUILD_DIR"
+# Fire up Webrick to serve out the contents of the iso.
 (   cd "$BUILD_DIR"
     exec ruby -rwebrick -e \
 	'WEBrick::HTTPServer.new(:BindAddress=>"127.0.0.1",:Port=>54321,:DocumentRoot=>".").start' ) &
@@ -138,7 +148,7 @@ make_redhat_chroot
 
 # Put ourselves in /mnt in the chroot.
 sudo mount --bind "$PWD" "$CHROOT/mnt"
-# build our extra yum repositories
+# build our extra yum repositories.
 rnum=0
 for repo in "${EXTRA_REPOS[@]}"; do
     rt=$(mktemp "/tmp/r${rnum}-XXX.repo")
@@ -153,17 +163,24 @@ EOF
     sudo cp "$rt" "$CHROOT/etc/yum.repos.d/"
     rm -f "$rt"
 done
+
+# Install the livecd tools and prerequisites.
 chroot_install livecd-tools livecd-installer rhpl kudzu
 in_chroot /bin/mkdir -p /mnt/cache /mnt/bin
-# mkfs'ing an ext3 filesystem barfs.  Force livecd-creator to use ext2 instead.
+# Force livecd-creator to use ext2 instead of ext3.
 in_chroot /bin/sed -i -e '/self.__fstype/ s/ext3/ext2/' \
     /usr/lib/python2.4/site-packages/imgcreate/creator.py
+
+# Regenerate the slectehammer.iso if it is not already there.
 if ! [[ -f $CHROOT/mnt/sledgehammer.iso ]]; then
     in_chroot /bin/bash -c 'cd /mnt; /usr/bin/livecd-creator --config=centos-sledgehammer.ks --cache=./cache -f sledgehammer' || \
 	die "Could not build full iso image"
 fi
 
+# Clear out the old tftpboot directory, otherwise the next command will fail.
 in_chroot /bin/rm -fr /mnt/tftpboot
+
+# Turn the ISO into a kernel/huge initramfs pair for PXE.
 in_chroot /bin/bash -c 'cd /mnt; /usr/bin/livecd-iso-to-pxeboot sledgehammer.iso' || die "Could not generate PXE boot information from Sledgehammer"
 in_chroot /bin/rm /mnt/sledgehammer.iso
 
