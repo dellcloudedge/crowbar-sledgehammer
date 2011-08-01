@@ -26,61 +26,151 @@
 # using the SLEDGEHAMMER_CHROOT environment variable.
 # You will also need sudo rights to mount, umount, cp, and chroot.
 
-die() { local _r=$1; shift; echo "$@"; exit $1; }
+[[ $DEBUG ]] && {
+    set -x
+    export PS4='${BASH_SOURCE}@${LINENO}(${FUNCNAME[0]}): '
+}
+
+die() { echo "$@"; exit 1; }
+shopt -s extglob
+
+cleanup() {
+    # Clean up any stray mounts we may have left behind.
+    while read dev fs type opts rest; do
+	sudo umount "$fs"
+    done < <(tac /proc/self/mounts |grep "$CHROOT")
+    [[ $webrick_pid ]] && kill -9 $webrick_pid
+    sudo umount "$BUILD_DIR"
+    sudo rm -rf "$BUILD_DIR" "$CHROOT" 
+}
+
+trap cleanup 0 INT QUIT TERM
+
+OS_BASIC_PACKAGES=(MAKEDEV SysVinit audit-libs basesystem bash beecrypt \
+    bzip2-libs coreutils centos-release cracklib cracklib-dicts db4 \
+    device-mapper e2fsprogs elfutils-libelf e2fsprogs-libs ethtool expat \
+    filesystem findutils gawk gdbm glib2 glibc glibc-common grep info \
+    initscripts iproute iputils krb5-libs libacl libattr libcap libgcc libidn \
+    libselinux libsepol libstdc++ libsysfs libtermcap libxml2 libxml2-python \
+    mcstrans mingetty mktemp module-init-tools ncurses neon net-tools nss \
+    nspr openssl pam pcre popt procps psmisc python python-libs \
+    python-elementtree python-sqlite python-urlgrabber python-iniparse \
+    readline rpm rpm-libs rpm-python sed setup shadow-utils sqlite sysklogd \
+    termcap tzdata udev util-linux yum yum-metadata-parser zlib)
+
+EXTRA_REPOS=('http://mirror.centos.org/centos/5/updates/$basearch' \
+    'http://mirror.centos.org/centos/5/extras/$basearch' \
+    'http://mirror.pnl.gov/epel/5/$basearch' \
+    'http://www.nanotechnologies.qc.ca/propos/linux/centos-live/$basearch/live' \
+    'http://download.elff.bravenet.com/5/$basearch')
+
+
+in_chroot() { sudo -H /usr/sbin/chroot "$CHROOT" "$@"; }
+chroot_install() { in_chroot /usr/bin/yum -y install "$@"; }
+chroot_fetch() { in_chroot /usr/bin/yum -y --downloadonly install "$@"; }
+
+make_redhat_chroot() (
+    postcmds=()
+    mkdir -p "$CHROOT"
+    sudo mount -t tmpfs -osize=2G none "$CHROOT"
+    cd "$BUILD_DIR/CentOS"
+    # first, extract our core files into the chroot.
+    for pkg in "${OS_BASIC_PACKAGES[@]}"; do
+	for f in "$pkg"-[0-9]*+(noarch|x86_64).rpm; do
+	    rpm2cpio "$f" | (cd "$CHROOT"; sudo cpio --extract \
+		--make-directories --no-absolute-filenames \
+		--preserve-modification-time)
+	done
+	if [[ $pkg =~ (centos|redhat)-release ]]; then
+	    mkdir -p "$CHROOT/tmp"
+	    cp "$f" "$CHROOT/tmp/$f"
+	    postcmds+=("/bin/rpm -ivh --force --nodeps /tmp/$f")
+	fi
+    done
+    # second, fix up the chroot to make sure we can use it
+    sudo cp /etc/resolv.conf "$CHROOT/etc/resolv.conf"
+    for d in proc sys dev dev/pts; do
+	mkdir -p "$CHROOT/$d"
+	sudo mount --bind "/$d" "$CHROOT/$d"
+    done
+    # third, run any post cmds we got earlier
+    for cmd in "${postcmds[@]}"; do
+	in_chroot $cmd
+    done
+    repo=$(mktemp /tmp/crowbar-repo-XXXXXXXX)
+    cat >"$repo" <<EOF
+[redhat-base]
+name=Redhat Base Repo
+baseurl=http://127.0.0.1:54321/
+enabled=1
+gpgcheck=0
+EOF
+    sudo rm -f "$CHROOT/etc/yum.repos.d/"*
+    sudo cp "$repo" "$CHROOT/etc/yum.repos.d/crowbar-build-base.repo"
+
+    # Work around packages we don't have, but that the yum bootstrap
+    # will grab for us.
+    in_chroot mkdir -p "/usr/lib/python2.4/site-packages/urlgrabber.broke"
+    for f in "$CHROOT/usr/lib/python2.4/site-packages/urlgrabber/keepalive"*; do
+	in_chroot mv "${f#$CHROOT}" \
+	    "/usr/lib/python2.4/site-packages/urlgrabber.broke/"
+    done
+    # Make sure yum does not throw away our caches for any reason.
+    in_chroot /bin/sed -i -e '/keepcache/ s/0/1/' /etc/yum.conf
+    # fourth, have yum bootstrap everything else into usefulness
+    chroot_install yum yum-downloadonly
+)
 
 [[ -f ${0##*/} ]] || \
-    die 1 "You must run ${0##*/} from the Sledgehammer checkout, not from $PWD"
+    die "You must run ${0##*/} from the Sledgehammer checkout, not from $PWD"
 
-if ! [[ -f /etc/redhat-release && $UID = 0 ]]; then
-    if [[ $SLEDGEHAMMER_CHROOT && \
-	-f $SLEDGEHAMMER_CHROOT/etc/redhat-release ]]; then
-	# Bind mount some important directories
-	for d in dev dev/pts sys proc; do
-	    grep -q "$SLEDGEHAMMER_CHROOT/$d" /proc/self/mounts || \
-		sudo mount --bind "/$d" "${SLEDGEHAMMER_CHROOT}/${d}"
-	done
-	# Put ourselves in /mnt in the chroot.
-	sudo mount --bind "$PWD" "$SLEDGEHAMMER_CHROOT/mnt"
-	# Make sure we can resolve domain names.
-	sudo cp /etc/resolv.conf "$SLEDGEHAMMER_CHROOT/etc/resolv.conf"
-	# Invoke ourself in the chroot.
-	sudo chroot "$SLEDGEHAMMER_CHROOT" /bin/bash -c "cd /mnt; ./${0##*/}"
-	# Clean up any stray mounts we may have left behind.
-	while read dev fs type opts rest; do
-	    sudo umount "$fs"
-	done < <(tac /proc/self/mounts |grep "$SLEDGEHAMMER_CHROOT")
-	exit 0
-    else
-	echo "You are not running on a Redhat system, and SLEDGEHAMMER_CHROOT is not set."
-	echo "Please set SLEDGEHAMMER_CHROOT at a Redhat or CentOS chroot."
-	echo "See HOWTO.Non.Redhat for more details."
-	exit 1
-    fi
+[[ $CENTOS_ISO && -f $CENTOS_ISO ]] || \
+    die "You must have the Centos 5.6 install DVD downloaded, and CENTOS_ISO must point to it."
+
+[[ $CHROOT ]] || CHROOT=$(mktemp -d "$HOME/.sledgehammer_chroot.XXXXX")
+[[ $BUILD_DIR ]] || BUILD_DIR=$(mktemp -d "$HOME/.centos-image.XXXXXX")
+sudo mount -o loop "$CENTOS_ISO" "$BUILD_DIR"
+(   cd "$BUILD_DIR"
+    exec ruby -rwebrick -e \
+	'WEBrick::HTTPServer.new(:BindAddress=>"127.0.0.1",:Port=>54321,:DocumentRoot=>".").start' ) &
+    webrick_pid=$!
+make_redhat_chroot
+
+# Put ourselves in /mnt in the chroot.
+sudo mount --bind "$PWD" "$CHROOT/mnt"
+# build our extra yum repositories
+rnum=0
+for repo in "${EXTRA_REPOS[@]}"; do
+    rt=$(mktemp "/tmp/r${rnum}-XXX.repo")
+    cat > "$rt" <<EOF
+[r${rnum}]
+name=Repo $rnum
+baseurl=$repo
+gpgcheck=0
+enabled=1
+EOF
+    rnum=$(($rnum + 1))
+    sudo cp "$rt" "$CHROOT/etc/yum.repos.d/"
+    rm -f "$rt"
+done
+chroot_install livecd-tools livecd-installer rhpl kudzu
+in_chroot /bin/mkdir -p /mnt/cache /mnt/bin
+# mkfs'ing an ext3 filesystem barfs.  Force livecd-creator to use ext2 instead.
+in_chroot /bin/sed -i -e '/self.__fstype/ s/ext3/ext2/' \
+    /usr/lib/python2.4/site-packages/imgcreate/creator.py
+if ! [[ -f $CHROOT/mnt/sledgehammer.iso ]]; then
+    in_chroot /bin/bash -c 'cd /mnt; /usr/bin/livecd-creator --config=centos-sledgehammer.ks --cache=./cache -f sledgehammer' || \
+	die "Could not build full iso image"
 fi
 
-if ! which livecd-creator livecd-iso-to-pxeboot &>/dev/null; then
-    echo "livecd-creator packages are not installed, Sledgehammer needs them."
-    echo "You can install them by following the instructions at:"
-    echo "https://projects.centos.org/trac/livecd/wiki/GetToolset"
-    exit 1
-fi
+in_chroot /bin/rm -fr /mnt/tftpboot
+in_chroot /bin/bash -c 'cd /mnt; /usr/bin/livecd-iso-to-pxeboot sledgehammer.iso' || die "Could not generate PXE boot information from Sledgehammer"
+in_chroot /bin/rm /mnt/sledgehammer.iso
 
-mkdir -p cache bin
+in_chroot /bin/mkdir -p /mnt/bin || die "Could not make bin directory"
+in_chroot /bin/bash -c 'cd /mnt; tar czf bin/sledgehammer-tftpboot.tar.gz tftpboot'
 
-if ! [[ -f sledgehammer.iso ]]; then
-    /usr/bin/livecd-creator --config=centos-sledgehammer.ks \
-	--cache=./cache -f sledgehammer || \
-	die 1 "Could not build full iso image"
-fi
+in_chroot chmod -R ugo+w /mnt/bin
+in_chroot /bin/rm -rf /mnt/tftpboot
 
-rm -fr tftpboot
-/usr/bin/livecd-iso-to-pxeboot sledgehammer.iso || \
-    die 1 "Could not generate PXE boot information from Sledgehammer"
-rm sledgehammer.iso
-
-mkdir -p bin || die -2 "Could not make bin directory"
-tar czf bin/sledgehammer-tftpboot.tar.gz tftpboot
-
-chmod -R ugo+w bin
-rm -rf tftpboot
 exit 0
