@@ -122,6 +122,10 @@ EOF
 [[ -f ${0##*/} ]] || \
     die "You must run ${0##*/} from the Sledgehammer checkout, not from $PWD"
 
+if ! which cpio &>/dev/null; then
+    die "Cannot find cpio, we cannot proceed."
+fi
+
 if ! which rpm rpm2cpio &>/dev/null; then
     die "Cannot find rpm and rpm2cpio, we cannot proceed."
 fi
