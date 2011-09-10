@@ -40,7 +40,9 @@ cleanup() {
 	sudo umount "$fs"
     done < <(tac /proc/self/mounts |grep "$CHROOT")
     [[ $webrick_pid ]] && kill -9 $webrick_pid
-    sudo umount "$BUILD_DIR"
+    # use lazy unmount other wise dev won't unmount and the rm will
+    # will trash the real dev mount.
+    sudo umount -l "$BUILD_DIR"
     sudo rm -rf "$BUILD_DIR" "$CHROOT" 
 }
 
