@@ -60,7 +60,7 @@ EXTRA_REPOS=('http://mirror.centos.org/centos/5/updates/$basearch' \
     'http://mirror.centos.org/centos/5/extras/$basearch' \
     'http://mirror.pnl.gov/epel/5/$basearch' \
     'http://www.nanotechnologies.qc.ca/propos/linux/centos-live/$basearch/live' \
-    'http://download.elff.bravenet.com/5/$basearch')
+    'http://rbel.frameos.org/stable/el5/$basearch')
 
 
 in_chroot() { sudo -H /usr/sbin/chroot "$CHROOT" "$@"; }

@@ -10,7 +10,7 @@ repo --name=a-updates --baseurl=http://mirror.centos.org/centos/5/updates/$basea
 repo --name=a-extras  --baseurl=http://mirror.centos.org/centos/5/extras/$basearch
 repo --name=a-epel    --baseurl=http://mirror.pnl.gov/epel/5/$basearch
 repo --name=a-live    --baseurl=http://www.nanotechnologies.qc.ca/propos/linux/centos-live/$basearch/live
-repo --name=a-elff    --baseurl=http://download.elff.bravenet.com/5/$basearch
+repo --name=a-rbel    --baseurl=http://rbel.frameos.org/stable/el5/$basearch
 
 %packages
 bash
@@ -41,7 +41,7 @@ libxml2.i386
 compat-libstdc++-33.i386
 pciutils
 ntp
-chef
+rubygem-chef
 which
 rpm
 coreutils
