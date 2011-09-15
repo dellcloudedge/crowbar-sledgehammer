@@ -41,7 +41,6 @@ libxml2.i386
 compat-libstdc++-33.i386
 pciutils
 ntp
-rubygem-chef
 which
 rpm
 coreutils
@@ -52,9 +51,22 @@ libsysfs.x86_64
 libsysfs.i386 
 yum
 curl
+ruby
+ruby-devel
+ruby-ri
+ruby-rdoc
+rubygems
+rubygem-chef
+rubygem-ohai
+git 
+gcc
+gcc-c++
+automake
+autoconf
+make
+
 
 %post
-
 ########################################################################
 # Create a sub-script so the output can be captured
 # Must change "$" to "\$" and "`" to "\`" to avoid shell quoting
