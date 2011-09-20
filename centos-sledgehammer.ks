@@ -67,6 +67,9 @@ make
 
 
 %post
+
+yum -y remove '*.i?86'
+
 ########################################################################
 # Create a sub-script so the output can be captured
 # Must change "$" to "\$" and "`" to "\`" to avoid shell quoting
