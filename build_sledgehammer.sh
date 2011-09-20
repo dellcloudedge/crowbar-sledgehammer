@@ -116,6 +116,7 @@ EOF
     done
     # Make sure yum does not throw away our caches for any reason.
     in_chroot /bin/sed -i -e '/keepcache/ s/0/1/' /etc/yum.conf
+    in_chroot sh -c "echo 'exclude = *.i386' >>/etc/yum.conf"
     # fourth, have yum bootstrap everything else into usefulness
     chroot_install yum yum-downloadonly
 )
