@@ -172,8 +172,8 @@ sudo mount --bind "$PWD" "$CHROOT/mnt"
 # build our extra yum repositories.
 rnum=0
 for repo in "${EXTRA_REPOS[@]}"; do
-    rt=$(mktemp "/tmp/r${rnum}-XXX.repo")
-    cat > "$rt" <<EOF
+    rt=$(mktemp "/tmp/r${rnum}-XXXXXXXX")
+    cat > "$rt".repo <<EOF
 [r${rnum}]
 name=Repo $rnum
 baseurl=$repo
@@ -181,8 +181,8 @@ gpgcheck=0
 enabled=1
 EOF
     rnum=$(($rnum + 1))
-    sudo cp "$rt" "$CHROOT/etc/yum.repos.d/"
-    rm -f "$rt"
+    sudo cp "$rt".repo "$CHROOT/etc/yum.repos.d/"
+    rm -f "$rt".repo
 done
 
 # Install the livecd tools and prerequisites.
