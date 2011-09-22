@@ -52,7 +52,8 @@ libsysfs.i386
 yum
 curl
 ruby
-ruby-devel
+ruby-libs.x86_64
+ruby-devel.x86_64
 ruby-ri
 ruby-rdoc
 rubygems
