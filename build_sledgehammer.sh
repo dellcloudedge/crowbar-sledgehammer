@@ -185,6 +185,10 @@ EOF
     rm -f "$rt".repo
 done
 
+in_chroot /bin/mv "$CHROOT/sbin/mksquashfs" "$CHROOT/sbin/mksquashfs.orig"
+sudo cp "$PWD/buildenv/mksquashfs"  "$CHROOT/sbin"
+in_chroot /bin/chmod 777 "$CHROOT/sbin/mksquashfs*"
+
 # Install the livecd tools and prerequisites.
 chroot_install livecd-tools livecd-installer rhpl kudzu
 in_chroot /bin/mkdir -p /mnt/cache /mnt/bin
