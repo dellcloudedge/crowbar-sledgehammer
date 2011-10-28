@@ -185,16 +185,16 @@ EOF
     rm -f "$rt".repo
 done
 
-in_chroot /bin/mv "$CHROOT/sbin/mksquashfs" "$CHROOT/sbin/mksquashfs.orig"
-sudo cp "$PWD/buildenv/mksquashfs"  "$CHROOT/sbin"
-in_chroot /bin/chmod 777 "$CHROOT/sbin/mksquashfs*"
-
 # Install the livecd tools and prerequisites.
 chroot_install livecd-tools livecd-installer rhpl kudzu
 in_chroot /bin/mkdir -p /mnt/cache /mnt/bin
 # Force livecd-creator to use ext2 instead of ext3.
 in_chroot /bin/sed -i -e '/self.__fstype/ s/ext3/ext2/' \
     /usr/lib/python2.4/site-packages/imgcreate/creator.py
+
+in_chroot /bin/mv "$CHROOT/sbin/mksquashfs" "$CHROOT/sbin/mksquashfs.orig"
+sudo cp "$PWD/buildenv/mksquashfs"  "$CHROOT/sbin"
+in_chroot /bin/chmod 777 "$CHROOT/sbin/mksquashfs*"
 
 # Regenerate the slectehammer.iso if it is not already there.
 if ! [[ -f $CHROOT/mnt/sledgehammer.iso ]]; then
