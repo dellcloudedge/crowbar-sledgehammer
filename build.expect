@@ -1,3 +1,5 @@
+#!/usr/bin/expect
+
 spawn ./build_sledgehammer.sh
 expect -timeout 600 {
        -re "^.*$" { exp_continue }
