@@ -1,2 +1,8 @@
 spawn ./build_sledgehammer.sh
-interact
+expect -timeout 600 {
+       -re "^.*$" { exp_continue }
+       eof {
+       	   catch wait result
+	   exit [lindex $result 3]
+       }
+}
