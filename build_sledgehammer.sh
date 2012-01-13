@@ -31,6 +31,14 @@
     export PS4='${BASH_SOURCE}@${LINENO}(${FUNCNAME[0]}): '
 }
 
+# Source our config file if we have one
+[[ -f $HOME/.build-crowbar.conf ]] && \
+    . "$HOME/.build-crowbar.conf"
+
+# Look for a local one.
+[[ -f build-crowbar.conf ]] && \
+    . "build-crowbar.conf"
+
 die() { echo "$@"; exit 1; }
 shopt -s extglob
 
@@ -185,6 +193,24 @@ EOF
     rm -f "$rt".repo
 done
 
+
+[[ $USE_PROXY = "1" ]] && (
+cd "$CHROOT"
+for f in etc/yum.repos.d/*; do
+    [[ -f "$f" ]] || continue
+    in_chroot /bin/grep -q '^proxy=' "/$f" && continue
+    in_chroot /bin/grep -q '^baseurl=http://.*127\.0\.0\.1.*' "/$f" && \
+    continue
+    in_chroot sed -i "/^name/ a\proxy=http://$PROXY_HOST:$PROXY_PORT" "$f"
+    [[ $PROXY_USER ]] && \
+    in_chroot sed -i "/^proxy/ a\proxy_username=$PROXY_USER" "$f"
+    [[ $PROXY_PASSWORD ]] && \
+        in_chroot sed -i "^/proxy_username/ a\proxy_password=$PROXY_PASSWORD" "$f"
+    : ;
+done
+)
+
+
 # Install the livecd tools and prerequisites.
 chroot_install livecd-tools livecd-installer rhpl kudzu
 in_chroot /bin/mkdir -p /mnt/cache /mnt/bin
@@ -199,8 +225,13 @@ in_chroot /bin/chmod 777 /sbin/mksquashfs.orig
 
 # Regenerate the slectehammer.iso if it is not already there.
 if ! [[ -f $CHROOT/mnt/sledgehammer.iso ]]; then
-    in_chroot /bin/bash -c 'cd /mnt; /usr/bin/livecd-creator --config=centos-sledgehammer.ks --cache=./cache -f sledgehammer' || \
-	die "Could not build full iso image"
+    if [[ $USE_PROXY = "1" ]]; then
+        in_chroot /bin/bash -c "cd /mnt; NO_PROXY=127.0.0.1 HTTP_PROXY=$PROXY_HOST:$PROXY_PORT /usr/bin/livecd-creator --config=centos-sledgehammer.ks --cache=./cache -f sledgehammer" || \
+    	die "Could not build full iso image"
+    else
+        in_chroot /bin/bash -c 'cd /mnt; /usr/bin/livecd-creator --config=centos-sledgehammer.ks --cache=./cache -f sledgehammer' || \
+    	die "Could not build full iso image"
+    fi
 fi
 
 # Clear out the old tftpboot directory, otherwise the next command will fail.

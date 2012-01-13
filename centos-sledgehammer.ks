@@ -27,6 +27,7 @@ dhclient
 tcpdump
 vim-enhanced
 openssh-clients
+openssh-server
 OpenIPMI-tools
 OpenIPMI
 portmap
@@ -87,7 +88,7 @@ cat > /etc/rc.d/init.d/openstack-start-up << EOF_initscript
 #
 # live: Init script for live image
 #
-# chkconfig: 345 28 72
+# chkconfig: 345 72 28
 # description: Init script for live image.
 
 
@@ -113,6 +114,7 @@ cp *.gem $INSTALL_ROOT/root
 
 cp start-up.sh $INSTALL_ROOT/etc/rc.d/init.d/openstack-start-up
 chmod +x $INSTALL_ROOT/etc/rc.d/init.d/openstack-start-up
+cp sshd_config $INSTALL_ROOT/etc/ssh/sshd_config
 
 cp dhclient.conf $INSTALL_ROOT/etc
 
