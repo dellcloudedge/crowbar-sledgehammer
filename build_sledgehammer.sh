@@ -39,6 +39,11 @@
 [[ -f build-crowbar.conf ]] && \
     . "build-crowbar.conf"
 
+# Location for caches that should not be erased between runs
+[[ $CACHE_DIR ]] || CACHE_DIR="$HOME/.crowbar-build-cache"
+
+[[ $CENTOS_ISO ]] || CENTOS_ISO="$CACHE_DIR/iso/CentOS-5.7-x86_64-bin-DVD-1of2.iso"
+
 die() { echo "$@"; exit 1; }
 shopt -s extglob
 
