@@ -146,21 +146,21 @@ fi
 
 [[ $CENTOS_ISO && -f $CENTOS_ISO ]] || {
     cat <<EOF
-You need to download the CentOS 5.6 x86_64 DVD in order to stage the
+You need to download the CentOS 5.7 x86_64 DVD in order to stage the
 Sledgehammer build.  You can download it via bittorrent using the following
 .torrent file:
-http://mirror.cs.vt.edu/pub/CentOS/5.6/isos/x86_64/CentOS-5.6-x86_64-bin-DVD.torrent
+http://mirror.cs.vt.edu/pub/CentOS/5.7/isos/x86_64/CentOS-5.7-x86_64-bin-DVD.torrent
 
 If you cannot download the DVD using bittorrent, you can also download it via 
 direct download from:
-http://mirror.cs.vt.edu/pub/CentOS/5.6/isos/x86_64/CentOS-5.6-x86_64-bin-DVD-1of2.iso
+http://mirror.cs.vt.edu/pub/CentOS/5.7/isos/x86_64/CentOS-5.7-x86_64-bin-DVD-1of2.iso
 
-Once you have downloaded the CentOS 5.6 DVD isos, point CENTOS_ISO at the first
+Once you have downloaded the CentOS 5.7 DVD isos, point CENTOS_ISO at the first
 ISO image and run build_sledgehammer.sh:
-CENTOS_ISO=/path/to/CentOS-5.6-x86_64-bin-DVD-1of2.iso ./build_sledgehammer.sh
+CENTOS_ISO=/path/to/CentOS-5.7-x86_64-bin-DVD-1of2.iso ./build_sledgehammer.sh
 
 EOF
-    die "You must have the Centos 5.6 install DVD downloaded, and CENTOS_ISO must point to it."
+    die "You must have the Centos 5.7 install DVD downloaded, and CENTOS_ISO must point to it."
 }
 
 # Make a directory for chroots and to mount the ISO on.
