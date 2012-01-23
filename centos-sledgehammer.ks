@@ -38,6 +38,7 @@ lshw
 dmidecode
 glibc.i686
 libxml2
+libxslt
 libxml2.i386
 compat-libstdc++-33.i386
 pciutils
@@ -66,6 +67,7 @@ gcc-c++
 automake
 autoconf
 make
+perl-XML-Twig
 
 
 %post
