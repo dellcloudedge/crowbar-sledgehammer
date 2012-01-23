@@ -68,7 +68,7 @@ automake
 autoconf
 make
 perl-XML-Twig
-
+parted
 
 %post
 
