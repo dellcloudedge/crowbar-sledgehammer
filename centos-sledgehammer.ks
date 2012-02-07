@@ -38,6 +38,9 @@ lshw
 dmidecode
 glibc.i686
 libxml2
+libxml2-devel
+zlib
+zlib-devel
 libxslt
 libxml2.i386
 compat-libstdc++-33.i386
