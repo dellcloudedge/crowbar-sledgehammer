@@ -23,7 +23,6 @@ chkconfig
 authconfig
 rootfiles
 comps-extras
-xkeyboard-config
 dhclient
 tcpdump
 vim-enhanced
@@ -31,19 +30,15 @@ openssh-clients
 openssh-server
 OpenIPMI-tools
 OpenIPMI
-portmap
+rpcbind
 nfs-utils
-procmail
 wget
-lshw
 dmidecode
 libxml2
 libxml2-devel
 zlib
 zlib-devel
 libxslt
-libxml2.i386
-compat-libstdc++-33.i386
 pciutils
 ntp
 which
@@ -63,7 +58,7 @@ ruby-rdoc
 rubygems
 rubygem-chef
 rubygem-ohai
-git 
+git
 gcc
 gcc-c++
 automake
