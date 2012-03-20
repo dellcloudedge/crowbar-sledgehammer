@@ -5,14 +5,15 @@ auth --useshadow --enablemd5
 selinux --disabled
 firewall --disabled
 
-repo --name=a-base    --baseurl=http://127.0.0.1:54321/
-repo --name=a-updates --baseurl=http://mirror.centos.org/centos/5/updates/$basearch
-repo --name=a-extras  --baseurl=http://mirror.centos.org/centos/5/extras/$basearch
-repo --name=a-epel    --baseurl=http://mirror.pnl.gov/epel/5/$basearch
+repo --name=a-base    --baseurl=http://mirror.centos.org/centos/6/os/$basearch
+repo --name=a-updates --baseurl=http://mirror.centos.org/centos/6/updates/$basearch
+repo --name=a-extras  --baseurl=http://mirror.centos.org/centos/6/extras/$basearch
+repo --name=a-epel    --baseurl=http://mirror.pnl.gov/epel/6/$basearch
 repo --name=a-live    --baseurl=http://www.nanotechnologies.qc.ca/propos/linux/centos-live/$basearch/live
-repo --name=a-rbel    --baseurl=http://rbel.frameos.org/stable/el5/$basearch
+repo --name=a-rbel    --baseurl=http://rbel.frameos.org/stable/el6/$basearch
 
 %packages
+@core
 bash
 kernel
 syslinux
@@ -36,7 +37,6 @@ procmail
 wget
 lshw
 dmidecode
-glibc.i686
 libxml2
 libxml2-devel
 zlib
@@ -53,7 +53,6 @@ tar
 gzip
 mktemp
 libsysfs.x86_64
-libsysfs.i386 
 yum
 curl
 ruby
@@ -127,3 +126,4 @@ EOF_postnochroot
 
 /bin/bash -x /root/postnochroot-install 2>&1 | tee /root/postnochroot-install.log
 
+%end
