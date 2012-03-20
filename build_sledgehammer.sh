@@ -58,17 +58,21 @@ cleanup() {
     sudo rm -rf "$BUILD_DIR" "$CHROOT"
 }
 
-OS_BASIC_PACKAGES=(MAKEDEV SysVinit audit-libs basesystem bash beecrypt \
-    bzip2-libs coreutils centos-release cracklib cracklib-dicts db4 \
-    device-mapper e2fsprogs elfutils-libelf e2fsprogs-libs ethtool expat \
-    filesystem findutils gawk gdbm glib2 glibc glibc-common grep info \
-    initscripts iproute iputils krb5-libs libacl libattr libcap libgcc libidn \
-    libselinux libsepol libstdc++ libsysfs libtermcap libxml2 libxml2-python \
-    mcstrans mingetty mktemp module-init-tools ncurses neon net-tools nss \
-    nspr openssl pam pcre popt procps psmisc python python-libs \
-    python-elementtree python-sqlite python-urlgrabber python-iniparse \
-    readline rpm rpm-libs rpm-python sed setup shadow-utils sqlite sysklogd \
-    termcap tzdata udev util-linux yum yum-metadata-parser zlib)
+OS_BASIC_PACKAGES=(MAKEDEV upstart audit-libs basesystem bash binutils \
+    bzip2-libs chkconfig cracklib cracklib-dicts crontabs coreutils db4 \
+    device-mapper e2fsprogs e2fsprogs-libs elfutils-libelf ethtool expat \
+    file-libs filesystem findutils gawk gdbm glib2 glibc glibc-common grep \
+    info initscripts iputils keyutils-libs krb5-libs libacl libattr libcap \
+    libcom_err libgcc libidn libselinux libsepol libstdc++ libsysfs libgcrypt \
+    libnih dbus-libs libcurl curl lua compat-libtermcap libutempter libxml2 \
+    libxml2-python logrotate m2crypto mcstrans mingetty mlocate \
+    module-init-tools ncurses ncurses-libs neon net-tools nss nss-sysinit \
+    nss-softokn nss-softokn-freebl openldap libssh2 cyrus-sasl-lib nss-util \
+    nspr openssl pam passwd libuser pcre popt procps psmisc python \
+    python-libs python-pycurl python-iniparse python-urlgrabber readline rpm \
+    rpm-libs rpm-python sed setup shadow-utils centos-release \
+    sqlite rsyslog tzdata udev util-linux-ng xz xz-libs yum \
+    yum-plugin-downloadonly yum-metadata-parser yum-utils zlib)
 
 EXTRA_REPOS=('http://mirror.centos.org/centos/6/os/$basearch' \
     'http://mirror.centos.org/centos/6/updates/$basearch' \
@@ -130,7 +134,7 @@ EOF
     in_chroot /bin/sed -i -e '/keepcache/ s/0/1/' /etc/yum.conf
     in_chroot sh -c "echo 'exclude = *.i386' >>/etc/yum.conf"
     # fourth, have yum bootstrap everything else into usefulness
-    chroot_install yum yum-downloadonly
+    chroot_install yum yum-plugin-downloadonly
     in_chroot ln -s /proc/self/mounts /etc/mtab
 )
 
