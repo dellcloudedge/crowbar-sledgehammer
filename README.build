@@ -1,13 +1,13 @@
 This file documents the process needed to create Sledgehammer on a non-Redhat
 system.
 
-1: Download a CentOS 5.7 install DVD from bittorent or your favourite mirror.
+1: Download a CentOS 5.8 install DVD from bittorent or your favourite mirror.
 2: Ensure that you have ruby, rpm, and rpm2cpio installed on your build system.
 3: If you are not building the Sledgehammer image as root, ensure that you
    have sudo rights to the following commands:
    mount umount cp rm cpio chroot
 4: Make sure build_sledgehammer.sh knows where to find the CentOS DVD:
-   export CENTOS_ISO=/path/to/CentOS-5.7-x86_64-bin-DVD-1of2.iso
+   export CENTOS_ISO=/path/to/CentOS-5.8-x86_64-bin-DVD-1of2.iso
 5: Run build_sledgehammer.sh from the checkout:
    ./build_sledgehammer.sh
 
